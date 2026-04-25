@@ -1,5 +1,4 @@
 import os
-import traceback
 
 def get_files_info(working_directory, directory="."):
     # print(working_directory, directory)
@@ -19,7 +18,6 @@ def get_files_info(working_directory, directory="."):
         files_info = "  - " + "\n  - ".join(files)
         return files_info
     except Exception as e:
-        traceback.print_exc()
         return f"Error: {str(e)}"
 
 
