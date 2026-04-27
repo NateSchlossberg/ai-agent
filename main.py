@@ -1,14 +1,23 @@
 import argparse
 import os
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+import prompts
+import call_function
 
 def generate_content(client, messages):
     model = 'gemini-2.5-flash'
     res = client.models.generate_content(
         model=model, 
-        contents=messages
+        contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[call_function.available_functions],
+            system_instruction=prompts.system_prompt,
+            # temperature=0
+        )
     )
     if not res.usage_metadata:
         raise RuntimeError('Prompt failed, please try again!')
@@ -35,7 +44,14 @@ def main():
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {res.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {res.usage_metadata.candidates_token_count}")
-    print(res.text)
+    if res.function_calls:
+        function_call_messages = map(
+            lambda fc: f'Calling function: {fc.name}({fc.args})',
+            res.function_calls
+        )
+        print("\n".join(function_call_messages))
+    else:
+        print(res.text)
 
 if __name__ == "__main__":
     main()
