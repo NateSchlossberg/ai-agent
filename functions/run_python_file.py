@@ -1,6 +1,6 @@
 import os
 import subprocess
-from io import StringIO
+from google.genai import types
 
 def run_python_file(working_directory, file_path, args=None):
     try:
@@ -38,7 +38,28 @@ def run_python_file(working_directory, file_path, args=None):
     except Exception as e:
          return f"Error: executing Python file: {e}"
 
-    
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Run a python file through a python3 interpreter (relative to the working directory) and returns the results, including any non-zero exit code, STDOUT, and STDERR",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="Path to python file to run, relative to the working directory.  Filename must end in '.py'",
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                items=types.Schema(
+                    type=types.Type.STRING,
+                    description="Argument to pass into python file",
+                ),
+                description="Array of arguments to pass to the python file upon execution. Arguments will be appended in order of the array",
+            ),
+        },
+        required=["file_path"],
+    ),
+)
     
     
 

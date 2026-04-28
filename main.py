@@ -6,7 +6,7 @@ from google import genai
 from google.genai import types
 
 import prompts
-import call_function
+from call_function import available_functions, call_function
 
 def generate_content(client, messages):
     model = 'gemini-2.5-flash'
@@ -14,7 +14,7 @@ def generate_content(client, messages):
         model=model, 
         contents=messages,
         config=types.GenerateContentConfig(
-            tools=[call_function.available_functions],
+            tools=[available_functions],
             system_instruction=prompts.system_prompt,
             # temperature=0
         )
@@ -45,11 +45,18 @@ def main():
         print(f"Prompt tokens: {res.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {res.usage_metadata.candidates_token_count}")
     if res.function_calls:
-        function_call_messages = map(
-            lambda fc: f'Calling function: {fc.name}({fc.args})',
-            res.function_calls
-        )
-        print("\n".join(function_call_messages))
+        function_results = []
+        for fc in res.function_calls:
+            function_result = call_function(fc, args.verbose)
+            if not function_result.parts:
+                raise Exception(f'No response from function {fc.name} (no parts property)')
+            if not function_result.parts[0].function_response:
+                raise Exception(f'No response from function {fc.name}')
+            function_results.append(function_result.parts[0])
+            if args.verbose:
+                print(f"-> {function_result.parts[0].function_response.response}")
+        
+            
     else:
         print(res.text)
 
